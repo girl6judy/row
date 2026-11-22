@@ -21,32 +21,7 @@ Open any `.html` file directly in your browser — no build step, no install.
 | [gym.html](gym.html) | Progressive overload gym tracker |
 | [topbar.js](topbar.js) | Shared top bar — auto-injected into pages that `<script src="topbar.js">` |
 
-Each app stores its own state in browser `localStorage`, and syncs it across devices through Supabase when configured (see below).
-
-## Supabase setup
-
-### Progress photo storage
-
-Gym progress photos upload to a public Storage bucket named `progress-photos`. Run this once in the Supabase SQL editor:
-
-```sql
-insert into storage.buckets (id, name, public)
-values ('progress-photos', 'progress-photos', true)
-on conflict (id) do update set public = true;
-
-drop policy if exists "anon upload progress-photos" on storage.objects;
-drop policy if exists "anon read progress-photos"   on storage.objects;
-drop policy if exists "anon delete progress-photos" on storage.objects;
-
-create policy "anon upload progress-photos"
-  on storage.objects for insert with check (bucket_id = 'progress-photos');
-
-create policy "anon read progress-photos"
-  on storage.objects for select using (bucket_id = 'progress-photos');
-
-create policy "anon delete progress-photos"
-  on storage.objects for delete using (bucket_id = 'progress-photos');
-```
+Each app stores its own state in browser `localStorage`. No accounts, no server.
 
 ## Building from scratch
 
