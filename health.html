@@ -3,35 +3,75 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#050506">
+<meta name="theme-color" content="#050506" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#EFEDE8" media="(prefers-color-scheme: light)">
 <meta name="color-scheme" content="dark">
 <title>Daily Stack — Customizable Template</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
 <script src="topbar.js" defer></script>
 <style>
+/* ===== Color tokens: dark values = original colors; light theme follows the device setting ===== */
 :root {
-  --bg: #050506;
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --bg-secondary: rgba(255, 255, 255, 0.035);
+  --lt-050506: #050506;
+  --lt-0a0a0b: #0A0A0B;
+  --lt-4d4b47: #4D4B47;
+  --lt-76746e: #76746E;
+  --lt-b8b6b0: #B8B6B0;
+  --lt-d8ab30: #D8AB30;
+  --lt-e8e5dd: #E8E5DD;
+  --lt-f2f0ea: #F2F0EA;
+  --lt-fafafa: #FAFAFA;
+  --lt-ff6b6b: #FF6B6B;
+  --lt-ff8a4d: #FF8A4D;
+  --lt-ffffff: #FFFFFF;
+  --lt-rgb-0-0-0: 0,0,0;
+  --lt-rgb-15-15-18: 15,15,18;
+  --lt-rgb-255-255-255: 255,255,255;
+}
+@media (prefers-color-scheme: light) {
+  :root:root {
+    color-scheme: light;
+    --lt-050506: #EFEDE8;
+    --lt-0a0a0b: #F6F5F1;
+    --lt-4d4b47: #B3AFA7;
+    --lt-76746e: #86827A;
+    --lt-b8b6b0: #57534C;
+    --lt-d8ab30: #9A6A06;
+    --lt-e8e5dd: #3D3A35;
+    --lt-f2f0ea: #2A2824;
+    --lt-fafafa: #1C1B19;
+    --lt-ff6b6b: #D42A2A;
+    --lt-ff8a4d: #C2410C;
+    --lt-ffffff: #1C1B19;
+    --lt-rgb-0-0-0: 255,255,255;
+    --lt-rgb-15-15-18: 255,255,255;
+    --lt-rgb-255-255-255: 28,27,25;
+  }
+}
+
+:root {
+  --bg: var(--lt-050506);
+  --bg-card: rgba(var(--lt-rgb-255-255-255), 0.04);
+  --bg-secondary: rgba(var(--lt-rgb-255-255-255), 0.035);
   --bg-input: rgba(0, 0, 0, 0.28);
   --bg-input-focus: rgba(0, 0, 0, 0.36);
-  --bg-dropdown: rgba(15, 15, 18, 0.96);
+  --bg-dropdown: rgba(var(--lt-rgb-15-15-18), 0.96);
 
-  --border: rgba(255, 255, 255, 0.06);
-  --border-soft: rgba(255, 255, 255, 0.04);
-  --border-strong: rgba(255, 255, 255, 0.12);
+  --border: rgba(var(--lt-rgb-255-255-255), 0.06);
+  --border-soft: rgba(var(--lt-rgb-255-255-255), 0.04);
+  --border-strong: rgba(var(--lt-rgb-255-255-255), 0.12);
 
-  --text-primary: #FAFAFA;
-  --text-secondary: #B8B6B0;
-  --text-tertiary: #76746E;
-  --text-quaternary: #4D4B47;
+  --text-primary: var(--lt-fafafa);
+  --text-secondary: var(--lt-b8b6b0);
+  --text-tertiary: var(--lt-76746e);
+  --text-quaternary: var(--lt-4d4b47);
 
   --accent: #1D9E75;
   --accent-glow: rgba(29, 158, 117, 0.35);
-  --warning: #FF8A4D;
+  --warning: var(--lt-ff8a4d);
   --warning-bg: rgba(163, 45, 45, 0.10);
-  --tag-stack: #D8AB30;
+  --tag-stack: var(--lt-d8ab30);
   --tag-stack-bg: rgba(216, 171, 48, 0.15);
 
   --font: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -61,7 +101,7 @@ body::before {
 }
 body::after {
   content: ''; position: fixed; inset: 0;
-  background-image: radial-gradient(rgba(255,255,255,0.014) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(var(--lt-rgb-255-255-255), 0.014) 1px, transparent 1px);
   background-size: 3px 3px;
   pointer-events: none; z-index: 1;
 }
@@ -115,15 +155,15 @@ main {
 }
 .stack-progress-track {
   height: 5px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(var(--lt-rgb-255-255-255), 0.05);
   border-radius: 999px; overflow: hidden;
   margin: 14px 0 18px;
 }
 .stack-progress-fill {
   height: 100%; width: 0%;
-  background: #FFFFFF; border-radius: 999px;
+  background: var(--lt-ffffff); border-radius: 999px;
   transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 1px 0 rgba(var(--lt-rgb-255-255-255), 0.4);
 }
 
 .stack-window { margin-bottom: 14px; }
@@ -148,7 +188,7 @@ main {
   border: 1px solid transparent;
   transition: background 0.2s, border-color 0.2s;
 }
-.stack-item:hover { background: rgba(255,255,255,0.05); }
+.stack-item:hover { background: rgba(var(--lt-rgb-255-255-255), 0.05); }
 .stack-item.taken { background: rgba(29,158,117,0.08); }
 .stack-item.taken .stack-item-name { text-decoration: line-through; color: var(--text-tertiary); }
 
@@ -192,7 +232,7 @@ main {
   outline: none;
 }
 .stack-item-name[contenteditable="true"] {
-  outline: 1px solid rgba(255,255,255,0.25);
+  outline: 1px solid rgba(var(--lt-rgb-255-255-255), 0.25);
   outline-offset: 4px; border-radius: 4px;
 }
 .stack-item-meta {
@@ -200,7 +240,7 @@ main {
   margin-top: 2px; outline: none; cursor: text;
 }
 .stack-item-meta[contenteditable="true"] {
-  outline: 1px solid rgba(255,255,255,0.2);
+  outline: 1px solid rgba(var(--lt-rgb-255-255-255), 0.2);
   outline-offset: 4px; border-radius: 4px;
   color: var(--text-secondary);
 }
@@ -256,7 +296,7 @@ main {
 }
 .stack-item:hover .stack-item-del { opacity: 1; }
 .stack-item-del:hover, .stack-item-del:active {
-  color: #FF6B6B;
+  color: var(--lt-ff6b6b);
   border-color: rgba(239, 68, 68, 0.45);
   background: rgba(239, 68, 68, 0.08);
   opacity: 1;
@@ -276,8 +316,8 @@ main {
   gap: 12px;
   padding: 10px 14px;
   margin-bottom: 14px;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(var(--lt-rgb-0-0-0), 0.28);
+  border: 1px solid rgba(var(--lt-rgb-255-255-255), 0.04);
   border-radius: 10px;
   font-size: 12px;
   min-height: 36px;
@@ -352,7 +392,7 @@ main {
 .stack-input::placeholder { color: var(--text-tertiary); }
 .stack-input:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.40);
+  border-color: rgba(var(--lt-rgb-255-255-255), 0.40);
   background: var(--bg-input-focus);
 }
 .stack-select { cursor: pointer; }
@@ -360,20 +400,20 @@ main {
   font-size: 13px;
   padding: 9px 11px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.85);
-  background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
-  color: #0A0A0B;
+  border: 1px solid rgba(var(--lt-rgb-255-255-255), 0.85);
+  background: linear-gradient(180deg, var(--lt-ffffff) 0%, var(--lt-e8e5dd) 100%);
+  color: var(--lt-0a0a0b);
   font-weight: 700;
   letter-spacing: 0.005em;
   cursor: pointer;
   font-family: inherit;
   transition: transform 0.12s, box-shadow 0.18s, background 0.18s;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 1px 0 rgba(var(--lt-rgb-255-255-255), 0.55),
     0 4px 14px rgba(0, 0, 0, 0.30);
 }
 .stack-add-btn:hover {
-  background: linear-gradient(180deg, #FFFFFF 0%, #F2F0EA 100%);
+  background: linear-gradient(180deg, var(--lt-ffffff) 0%, var(--lt-f2f0ea) 100%);
   transform: translateY(-1px);
 }
 .stack-add-btn:active { transform: translateY(0) scale(0.97); }
@@ -412,7 +452,7 @@ main {
   color: var(--text-secondary);
   transition: background 0.12s;
 }
-.stack-result:hover, .stack-result.is-focused { background: rgba(255, 255, 255, 0.06); }
+.stack-result:hover, .stack-result.is-focused { background: rgba(var(--lt-rgb-255-255-255), 0.06); }
 
 .stack-result-icon { font-size: 17px; flex-shrink: 0; width: 24px; text-align: center; }
 .stack-result-body { min-width: 0; flex: 1; }
@@ -448,8 +488,8 @@ main {
 ::selection { background: rgba(224, 118, 88, 0.3); color: var(--text-primary); }
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
+::-webkit-scrollbar-thumb { background: rgba(var(--lt-rgb-255-255-255), 0.08); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(var(--lt-rgb-255-255-255), 0.15); }
 </style>
 </head>
 <body>
@@ -865,7 +905,7 @@ main {
       const textSpan = el.querySelector('.stack-item-name-text');
       if (!textSpan) return;
       textSpan.setAttribute('contenteditable', 'true');
-      textSpan.style.outline = '1px solid rgba(255,255,255,0.25)';
+      textSpan.style.outline = '1px solid rgba(var(--lt-rgb-255-255-255), 0.25)';
       textSpan.style.outlineOffset = '4px';
       textSpan.style.borderRadius = '4px';
       textSpan.focus();

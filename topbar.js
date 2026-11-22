@@ -19,6 +19,23 @@
 
   // -------- CSS --------
   const css = `
+/* ===== Color tokens: dark values = original colors; light theme follows the device setting ===== */
+:root {
+  --lt-0a0a0b: #0A0A0B;
+  --lt-fafafa: #FAFAFA;
+  --lt-ffffff: #FFFFFF;
+  --lt-rgb-255-255-255: 255,255,255;
+}
+@media (prefers-color-scheme: light) {
+  :root:root {
+    color-scheme: light;
+    --lt-0a0a0b: #F6F5F1;
+    --lt-fafafa: #1C1B19;
+    --lt-ffffff: #1C1B19;
+    --lt-rgb-255-255-255: 28,27,25;
+  }
+}
+
 .topbar {
   position: sticky; top: 0; z-index: 40;
   display: flex; gap: 6px;
@@ -26,23 +43,23 @@
   /* Fully opaque so each page's body background can't bleed through
      and tint the bar a different color. Matches the dashboard's base
      dark background so the bar feels continuous with the page chrome. */
-  background: #0a0a0b;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--lt-0a0a0b);
+  border-bottom: 1px solid rgba(var(--lt-rgb-255-255-255), 0.06);
   font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
 }
 .topbar-pill {
   flex: 1 1 0; min-width: 0;
   display: inline-flex; align-items: center; gap: 8px;
   padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(var(--lt-rgb-255-255-255), 0.04);
+  border: 1px solid rgba(var(--lt-rgb-255-255-255), 0.06);
   border-radius: 11px;
   text-decoration: none;
-  color: #FAFAFA;
+  color: var(--lt-fafafa);
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, border-color 0.15s;
 }
-.topbar-pill:hover { background: rgba(255, 255, 255, 0.07); border-color: rgba(255, 255, 255, 0.10); }
+.topbar-pill:hover { background: rgba(var(--lt-rgb-255-255-255), 0.07); border-color: rgba(var(--lt-rgb-255-255-255), 0.10); }
 .topbar-pill-dot {
   width: 7px; height: 7px; border-radius: 50%;
   background: #6ee7b7; flex-shrink: 0;
@@ -59,14 +76,14 @@
 .topbar-pill-label {
   font-size: 10px; font-weight: 700;
   letter-spacing: 0.14em; text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(var(--lt-rgb-255-255-255), 0.5);
   flex-shrink: 0;
 }
 .topbar-pill-count {
   margin-left: auto;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 12px; font-weight: 700;
-  color: #FAFAFA;
+  color: var(--lt-fafafa);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -83,7 +100,7 @@
   border-right: none;
   border-radius: 11px 0 0 11px;
   text-decoration: none;
-  color: #FAFAFA;
+  color: var(--lt-fafafa);
   -webkit-tap-highlight-color: transparent;
   transition: background 0.15s;
 }
@@ -94,7 +111,7 @@
   width: 38px;
   border: 1px solid rgba(125, 211, 252, 0.14);
   background: linear-gradient(180deg, rgba(125, 211, 252, 0.22), rgba(110, 231, 183, 0.22));
-  color: #FFFFFF;
+  color: var(--lt-ffffff);
   font-family: inherit; font-size: 17px; font-weight: 700;
   cursor: pointer;
   border-radius: 0 11px 11px 0;
