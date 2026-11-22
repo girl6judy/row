@@ -1025,12 +1025,6 @@ document.addEventListener('DOMContentLoaded', function () {
     syncedPrefixes: ['stack:taken:'],
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });
-  // Water lives in its own cloud row, shared with po-water.html.
-  initCloudSync({
-    appKey: 'water',
-    syncedKeys: ['po_water_v1'],
-    onApplied: function () { window.dispatchEvent(new Event('storage')); }
-  });
 });
 </script>
 </body>

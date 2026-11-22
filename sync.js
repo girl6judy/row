@@ -16,6 +16,10 @@
     if (!appKey || !window.supabase) return;
     if (!SUPABASE_URL || !SUPABASE_KEY) return;
     if (SUPABASE_URL.indexOf('PASTE-') === 0 || SUPABASE_KEY.indexOf('PASTE-') === 0) return;
+    // Only one sync per appKey per page (topbar.js and a page could both ask).
+    window.__cloudSyncInited = window.__cloudSyncInited || {};
+    if (window.__cloudSyncInited[appKey]) return;
+    window.__cloudSyncInited[appKey] = true;
 
     let supa = null, pushTimer = null, suppressSync = false, lastSyncedJson = null;
 

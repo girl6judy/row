@@ -4,9 +4,9 @@
 //     <script src="topbar.js" defer></script>
 // It self-injects HTML + CSS, reads progress from the same
 // localStorage keys the dashboard's tabs already use, and a
-// water "+1" button writes to localStorage and (if configured)
-// pushes a merged update to the Supabase health row so the
-// new bottle appears on every device within ~1 second.
+// water "+1" button writes to localStorage. It also syncs water
+// (the Supabase 'water' row) on every page via sync.js, so a new
+// bottle appears on every device within ~1 second.
 // =============================================================
 (function () {
   'use strict';
@@ -320,26 +320,30 @@ body.topbar-modal-open {
     };
   }
 
-  async function pushWaterMergedToSupabase(localWater) {
-    // Only do this when we're NOT on the health page — health page
-    // has its own sync that already detects the localStorage change.
-    if (window.location.pathname.endsWith('/health.html') ||
-        window.location.pathname.endsWith('health.html')) return;
-
-    if (!window.supabase || !TOPBAR_SUPABASE_URL || !TOPBAR_SUPABASE_KEY) return;
-    if (TOPBAR_SUPABASE_URL.indexOf('PASTE-') === 0) return;
-
+  // -------- Water cloud sync --------
+  // The top bar is on every page, so it owns syncing water (the 'water'
+  // row in app_state) everywhere: pulls the latest on load, applies live
+  // changes from other devices, and pushes every +1 via sync.js.
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src; s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+  async function startWaterSync() {
     try {
-      const supa = window.supabase.createClient(TOPBAR_SUPABASE_URL, TOPBAR_SUPABASE_KEY);
-      const { data } = await supa
-        .from('app_state').select('data').eq('key', 'health').maybeSingle();
-      const current = (data && data.data) || {};
-      const merged = Object.assign({}, current, { po_water_v1: localWater });
-      await supa.from('app_state').upsert(
-        { key: 'health', data: merged, updated_at: new Date().toISOString() },
-        { onConflict: 'key' }
-      );
-    } catch (e) { /* offline — local change will sync next time user visits health */ }
+      if (!window.supabase) {
+        await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+      }
+      if (typeof window.initCloudSync !== 'function') await loadScript('sync.js');
+    } catch (e) { return; /* offline — water stays local until next load */ }
+    if (typeof window.initCloudSync !== 'function') return;
+    window.initCloudSync({
+      appKey: 'water',
+      syncedKeys: ['po_water_v1'],
+      onApplied: function () { window.dispatchEvent(new Event('storage')); }
+    });
   }
 
   function addWater() {
@@ -357,8 +361,7 @@ body.topbar-modal-open {
       btn.classList.add('flash');
       setTimeout(() => btn.classList.remove('flash'), 220);
     }
-
-    pushWaterMergedToSupabase(state);
+    // sync.js picks up the localStorage write above and pushes it.
   }
 
   // -------- Mobile lockdown helpers --------
@@ -416,6 +419,7 @@ body.topbar-modal-open {
     render();
     lockGestures();
     startModalLock();
+    startWaterSync();
 
     // Re-render when localStorage changes from another tab/window OR when
     // the page becomes visible (sync may have pulled in the background).
