@@ -1021,8 +1021,14 @@ document.addEventListener('DOMContentLoaded', function () {
   if (typeof initCloudSync !== 'function') return;
   initCloudSync({
     appKey: 'health',
-    syncedKeys: ['stack:items', 'stack:version', 'stack:low', 'po_water_v1'],
+    syncedKeys: ['stack:items', 'stack:version', 'stack:low'],
     syncedPrefixes: ['stack:taken:'],
+    onApplied: function () { window.dispatchEvent(new Event('storage')); }
+  });
+  // Water lives in its own cloud row, shared with po-water.html.
+  initCloudSync({
+    appKey: 'water',
+    syncedKeys: ['po_water_v1'],
     onApplied: function () { window.dispatchEvent(new Event('storage')); }
   });
 });
