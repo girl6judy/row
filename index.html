@@ -8,6 +8,7 @@
 <title>Sediqua's Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js" defer></script>
+<script src="pomodoro.js" defer></script>
 <script src="topbar.js" defer></script>
 <style>
 /* ===== Color tokens: dark values = original colors; light theme follows the device setting ===== */
@@ -274,6 +275,97 @@ body::after {
   .day-ring { width: 144px; height: 144px; }
   .day-ring-percent { font-size: 32px; }
   .day-ring-status { font-size: 13px; }
+}
+
+/* ===== Component 3b: Focus (Pomodoro) card =====
+   Reuses .day-ring-wrap / .day-ring / .day-ring-text, .gm-add, .gm-polish,
+   .gm-streak and .empty-state; only the extras live here. */
+:root {
+  --pomo-focus: #FF9559;   /* the day ring's orange */
+  --pomo-short: #6EE7B7;   /* GOALS dot green */
+  --pomo-long:  #7DD3FC;   /* WATER dot blue */
+}
+@media (prefers-color-scheme: light) {
+  :root:root { --pomo-focus: #E0662C; --pomo-short: #05875F; --pomo-long: #0369A1; }
+}
+.pomo-wrap { position: relative; align-items: flex-start; }
+.pomo-wrap[data-phase="focus"] { --pomo-color: var(--pomo-focus); }
+.pomo-wrap[data-phase="short"] { --pomo-color: var(--pomo-short); }
+.pomo-wrap[data-phase="long"]  { --pomo-color: var(--pomo-long); }
+.pomo-wrap .day-ring { align-self: center; }
+#pomoFill { stroke: var(--pomo-color); }
+.pomo-time { font-size: 36px; letter-spacing: -0.03em; }
+.pomo-side { flex: 1 1 260px; max-width: 360px; gap: 12px; align-self: center; }
+.pomo-lines { display: flex; flex-direction: column; gap: 6px; }
+.pomo-goal { display: flex; flex-direction: column; gap: 6px; }
+.pomo-goal[hidden] { display: none; }
+.pomo-goal-label {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.pomo-select { flex: none; width: 100%; padding: 9px 12px; font-size: 13px; cursor: pointer; }
+.pomo-goal-text { font-size: 14px; color: var(--text-primary); }
+.pomo-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pomo-controls .gm-add { min-width: 92px; }
+.pomo-icon-btn { padding: 11px 13px; line-height: 1; }
+.pomo-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.pomo-dots { display: flex; gap: 7px; align-items: center; }
+.pomo-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: rgba(var(--lt-rgb-255-255-255), 0.10);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.pomo-dot.is-done { background: var(--pomo-focus); box-shadow: 0 0 6px var(--pomo-focus); }
+.pomo-dot.is-current { background: transparent; box-shadow: inset 0 0 0 1.5px var(--pomo-focus); }
+.pomo-prompt {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(107,227,164,0.08);
+  border: 1px solid rgba(107,227,164,0.25);
+  font-size: 13px; color: var(--text-primary);
+}
+.pomo-prompt[hidden] { display: none; }
+.pomo-prompt-text { flex: 1 1 180px; }
+.pomo-prompt-actions { display: flex; gap: 8px; }
+.pomo-prompt .gm-add, .pomo-prompt .gm-polish { padding: 8px 14px; font-size: 12px; }
+.pomo-empty { text-align: left; padding: 0; }
+.pomo-empty[hidden] { display: none; }
+.pomo-popover {
+  position: absolute; z-index: 30;
+  top: 14px; right: 14px;
+  width: min(260px, calc(100% - 28px));
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 16px;
+  border-radius: 14px;
+  background: var(--lt-0a0a0b);
+  border: 1px solid rgba(var(--lt-rgb-255-255-255), 0.10);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+}
+.pomo-popover[hidden] { display: none; }
+.pomo-popover-title {
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.pomo-field {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-size: 13px; color: var(--text-secondary);
+}
+.pomo-field .gm-input { flex: none; width: 76px; padding: 7px 10px; font-size: 13px; text-align: right; }
+.pomo-field input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--pomo-focus); }
+.pomo-popover .gm-add { margin-top: 4px; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+@media (max-width: 480px) {
+  .pomo-time { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #pomoFill, .pomo-dot { transition: none; }
 }
 
 /* ===== Component 4: section + To Do List ===== */
@@ -674,6 +766,81 @@ body::after {
       <div class="day-ring-status"    id="dayRingStatus">Loading…</div>
       <div class="day-ring-remaining" id="dayRingRemaining">—</div>
       <div class="day-ring-hours">8:00 AM – 12:00 AM</div>
+    </div>
+  </div>
+
+  <!-- FOCUS (Pomodoro) — logic in pomodoro.js, wiring at the bottom of this file -->
+  <div class="section" id="focus">
+    <div class="section-title">Focus</div>
+    <div class="day-ring-wrap pomo-wrap" id="pomoCard" data-phase="focus">
+      <div class="day-ring">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="day-ring-track" cx="60" cy="60" r="52" />
+          <circle class="day-ring-fill"  cx="60" cy="60" r="52" id="pomoFill" filter="url(#dayRingGlow)" />
+        </svg>
+        <div class="day-ring-overlay">
+          <div class="day-ring-percent pomo-time" id="pomoTime">25:00</div>
+          <div class="day-ring-phase" id="pomoPhase">Focus</div>
+        </div>
+      </div>
+
+      <div class="day-ring-text pomo-side">
+        <div class="pomo-lines">
+          <div class="day-ring-status"    id="pomoStatus">🍅 Deep work — session 1 of 4</div>
+          <div class="day-ring-remaining" id="pomoRemaining">25m 00s left</div>
+          <div class="day-ring-hours"     id="pomoTimes">Not started</div>
+        </div>
+
+        <div class="pomo-goal" id="pomoGoalRow">
+          <label class="pomo-goal-label" for="pomoGoalSelect" id="pomoGoalLabel">Focusing on</label>
+          <select id="pomoGoalSelect" class="gm-input pomo-select"></select>
+          <div class="pomo-goal-text" id="pomoGoalText" hidden></div>
+        </div>
+
+        <div class="pomo-controls">
+          <button type="button" id="pomoStartBtn" class="gm-add" aria-label="Start timer">Start</button>
+          <button type="button" id="pomoResetBtn" class="gm-polish" aria-label="Reset timer">Reset</button>
+          <button type="button" id="pomoSkipBtn"  class="gm-polish" aria-label="Skip to the next phase">Skip</button>
+          <button type="button" id="pomoSettingsBtn" class="gm-polish pomo-icon-btn" aria-label="Timer settings"
+                  aria-haspopup="dialog" aria-expanded="false" aria-controls="pomoSettings">⚙︎</button>
+        </div>
+
+        <div class="pomo-meta">
+          <div class="pomo-dots" id="pomoDots" role="img" aria-label="0 of 4 focus sessions done this round"></div>
+          <div class="gm-streak" id="pomoToday">
+            <span class="gm-streak-icon" aria-hidden="true">🍅</span>
+            <span class="gm-streak-num" id="pomoTodayNum">0</span>
+            <span>today</span>
+          </div>
+        </div>
+
+        <div class="pomo-prompt" id="pomoPrompt" hidden>
+          <span class="pomo-prompt-text">Done with this goal? <strong id="pomoPromptGoal"></strong></span>
+          <span class="pomo-prompt-actions">
+            <button type="button" id="pomoPromptYes" class="gm-add" aria-label="Yes, check this goal off">Check it off</button>
+            <button type="button" id="pomoPromptNo"  class="gm-polish" aria-label="Not yet, keep the goal open">Not yet</button>
+          </span>
+        </div>
+
+        <div class="empty-state pomo-empty" id="pomoEmpty">No session yet. Pick a goal and press Start.</div>
+      </div>
+
+      <div class="pomo-popover" id="pomoSettings" role="dialog" aria-label="Timer settings" hidden>
+        <div class="pomo-popover-title">Timer settings</div>
+        <label class="pomo-field">Focus (min)
+          <input class="gm-input" type="number" id="pomoSetFocus" min="1" max="180" inputmode="numeric"></label>
+        <label class="pomo-field">Short break (min)
+          <input class="gm-input" type="number" id="pomoSetShort" min="1" max="60" inputmode="numeric"></label>
+        <label class="pomo-field">Long break (min)
+          <input class="gm-input" type="number" id="pomoSetLong" min="1" max="90" inputmode="numeric"></label>
+        <label class="pomo-field">Daily goal (sessions)
+          <input class="gm-input" type="number" id="pomoSetTarget" min="1" max="24" inputmode="numeric"></label>
+        <label class="pomo-field">Auto-start next phase
+          <input type="checkbox" id="pomoSetAuto"></label>
+        <button type="button" id="pomoSettingsDone" class="gm-add" aria-label="Save settings and close">Done</button>
+      </div>
+
+      <div class="sr-only" id="pomoLive" role="status" aria-live="polite" aria-atomic="true"></div>
     </div>
   </div>
 
@@ -1329,6 +1496,25 @@ body::after {
     loadTomorrow
   );
 
+  // ---------- Bridge for the Focus card ----------
+  // Lets the Pomodoro card list today's open goals and check one off the
+  // same way the checkbox does (so it counts toward X / Y and the streak).
+  window.dashGoals = {
+    openToday: function () {
+      return getGoals(todayKey()).filter(g => g && !g.done && g.text).map(g => g.text);
+    },
+    complete: function (text) {
+      const list = getGoals(todayKey());
+      const g = list.find(x => x && !x.done && x.text === text);
+      if (!g) return false;
+      g.done = true;
+      g.doneAt = Date.now();
+      setGoals(todayKey(), list);
+      loadToday();
+      return true;
+    }
+  };
+
   // ---------- Boot ----------
   rollover();
   processStreak();
@@ -1344,6 +1530,218 @@ body::after {
     loadToday(); loadTomorrow(); renderStreak();
   });
 })();
+</script>
+<script>
+// =============================================================
+// Focus card wiring (layout only). The timer itself is pomodoro.js.
+// =============================================================
+document.addEventListener('DOMContentLoaded', function () {
+  'use strict';
+  if (!window.Pomodoro) return;
+  const P = window.Pomodoro;
+  const $ = (id) => document.getElementById(id);
+
+  const card = $('pomoCard'), fill = $('pomoFill');
+  const C = 2 * Math.PI * 52;
+  fill.setAttribute('stroke-dasharray', C);
+
+  function clock(ms) {
+    const d = new Date(ms);
+    let h = d.getHours();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return h + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + ampm;
+  }
+  function minSec(ms) {
+    const t = Math.max(0, Math.ceil(ms / 1000));
+    return Math.floor(t / 60) + 'm ' + String(t % 60).padStart(2, '0') + 's';
+  }
+  function statusLine(s) {
+    let line;
+    if (s.phase === 'focus') line = '🍅 Deep work — session ' + s.sessionNumber + ' of ' + s.longEvery;
+    else if (s.phase === 'short') line = '☕ Short break — breathe';
+    else line = '🌿 Long break — step away';
+    return s.status === 'paused' ? line + ' (paused)' : line;
+  }
+
+  // ---- "Focusing on" picker ----
+  const select = $('pomoGoalSelect');
+  let lastOptions = '';
+  function renderGoalPicker(s) {
+    const open = window.dashGoals ? window.dashGoals.openToday() : [];
+    const pickable = s.phase === 'focus' && s.status === 'idle';
+    // A chosen goal that was checked off or deleted is no longer a valid pick.
+    if (pickable && s.focusGoal && open.indexOf(s.focusGoal) === -1) { P.setFocusGoal(null); return; }
+
+    const sig = JSON.stringify(open);
+    if (sig !== lastOptions) {
+      lastOptions = sig;
+      select.innerHTML = '';
+      const none = document.createElement('option');
+      none.value = '';
+      none.textContent = open.length ? '— No specific goal —' : '— No open goals today —';
+      select.appendChild(none);
+      open.forEach((t) => {
+        const o = document.createElement('option');
+        o.value = t; o.textContent = t;
+        select.appendChild(o);
+      });
+    }
+    select.value = s.focusGoal || '';
+
+    const text = $('pomoGoalText');
+    select.hidden = !pickable;
+    text.hidden = pickable;
+    text.textContent = s.focusGoal || '';
+    // Hide the whole row during a break or a goal-less session.
+    $('pomoGoalRow').hidden = !pickable && !s.focusGoal;
+  }
+  select.addEventListener('change', () => P.setFocusGoal(select.value || null));
+
+  // ---- main render ----
+  let firstRender = true;
+  function render(s) {
+    card.dataset.phase = s.phase;
+    if (firstRender) {
+      // Land on the current position without sweeping in from a full ring.
+      fill.style.transition = 'none';
+      fill.setAttribute('stroke-dashoffset', C * (1 - s.fractionLeft));
+      fill.getBoundingClientRect();
+      fill.style.transition = '';
+      firstRender = false;
+    }
+    fill.setAttribute('stroke-dashoffset', C * (1 - s.fractionLeft));
+    $('pomoTime').textContent = P.format(s.remainingMs);
+    $('pomoPhase').textContent = s.phaseLabel;
+    $('pomoStatus').textContent = statusLine(s);
+    $('pomoRemaining').textContent = minSec(s.remainingMs) + ' left';
+    $('pomoTimes').textContent =
+      s.status === 'running' ? 'Started ' + clock(s.startedAt) + ' — ends ' + clock(s.endAt)
+      : s.status === 'paused' && s.startedAt ? 'Started ' + clock(s.startedAt) + ' — paused'
+      : 'Not started';
+
+    const startBtn = $('pomoStartBtn');
+    const label = s.status === 'running' ? 'Pause' : s.status === 'paused' ? 'Resume' : 'Start';
+    startBtn.textContent = label;
+    startBtn.setAttribute('aria-label', label + ' ' + s.phaseLabel.toLowerCase() + ' timer');
+
+    const dots = $('pomoDots');
+    if (dots.children.length !== s.longEvery) {
+      dots.innerHTML = '';
+      for (let i = 0; i < s.longEvery; i++) {
+        const d = document.createElement('span');
+        d.className = 'pomo-dot';
+        dots.appendChild(d);
+      }
+    }
+    Array.from(dots.children).forEach((d, i) => {
+      d.classList.toggle('is-done', i < s.roundDone);
+      d.classList.toggle('is-current', s.phase === 'focus' && i === s.roundDone);
+    });
+    dots.setAttribute('aria-label', s.roundDone + ' of ' + s.longEvery + ' focus sessions done this round');
+
+    $('pomoTodayNum').textContent = s.todayCount;
+    $('pomoToday').classList.toggle('gm-streak-active', s.todayCount > 0);
+
+    const prompt = $('pomoPrompt');
+    prompt.hidden = !s.prompt;
+    if (s.prompt) $('pomoPromptGoal').textContent = s.prompt.goal;
+
+    $('pomoEmpty').hidden = !(s.todayCount === 0 && s.status === 'idle' && s.phase === 'focus' && !s.prompt);
+    renderGoalPicker(s);
+  }
+
+  // ---- screen-reader announcements ----
+  const live = $('pomoLive');
+  function announce(msg) { live.textContent = ''; setTimeout(() => { live.textContent = msg; }, 50); }
+  function describe(s, evt) {
+    const name = (p) => P.PHASES[p].label.toLowerCase();
+    switch (evt.type) {
+      case 'phase-end':
+        return (evt.from === 'focus' ? 'Focus session complete. ' : 'Break over. ') +
+          name(evt.to).replace(/^./, (c) => c.toUpperCase()) + (evt.autoStarted ? ' started.' : ' ready. Press Start.');
+      case 'skip':  return 'Skipped to ' + name(evt.to) + '.';
+      case 'start': return s.phaseLabel + ' timer started, ' + minSec(s.remainingMs) + ' left.';
+      case 'pause': return 'Timer paused, ' + minSec(s.remainingMs) + ' left.';
+      case 'reset': return s.phaseLabel + ' timer reset.';
+      default: return '';
+    }
+  }
+
+  P.subscribe((s, evt) => {
+    render(s);
+    const msg = describe(s, evt || {});
+    if (msg) announce(msg);
+  });
+  window.addEventListener('goals-changed', () => render(P.getState()));
+  window.addEventListener('storage', () => render(P.getState()));
+
+  // ---- controls ----
+  $('pomoStartBtn').addEventListener('click', () => P.toggle());
+  $('pomoResetBtn').addEventListener('click', () => P.reset());
+  $('pomoSkipBtn').addEventListener('click', () => P.skip());
+  $('pomoPromptYes').addEventListener('click', () => {
+    const s = P.getState();
+    const goal = s.prompt && s.prompt.goal;
+    const ok = goal && window.dashGoals && window.dashGoals.complete(goal);
+    if (goal && s.focusGoal === goal) P.setFocusGoal(null);
+    P.dismissPrompt();
+    announce(ok ? 'Goal checked off.' : 'That goal is already done or was removed.');
+  });
+  $('pomoPromptNo').addEventListener('click', () => P.dismissPrompt());
+
+  // ---- settings popover ----
+  const pop = $('pomoSettings'), gear = $('pomoSettingsBtn');
+  const fields = { focusMin: 'pomoSetFocus', shortMin: 'pomoSetShort', longMin: 'pomoSetLong', dailyTarget: 'pomoSetTarget' };
+  function openSettings() {
+    const st = P.getState().settings;
+    Object.keys(fields).forEach((k) => { $(fields[k]).value = st[k]; });
+    $('pomoSetAuto').checked = st.autoStart;
+    pop.hidden = false;
+    gear.setAttribute('aria-expanded', 'true');
+    $('pomoSetFocus').focus();
+  }
+  function closeSettings(save) {
+    if (pop.hidden) return;
+    if (save) {
+      const next = { autoStart: $('pomoSetAuto').checked };
+      Object.keys(fields).forEach((k) => {
+        const v = parseInt($(fields[k]).value, 10);
+        if (!isNaN(v)) next[k] = v;
+      });
+      P.updateSettings(next);
+    }
+    pop.hidden = true;
+    gear.setAttribute('aria-expanded', 'false');
+    gear.focus();
+  }
+  gear.addEventListener('click', () => (pop.hidden ? openSettings() : closeSettings(true)));
+  $('pomoSettingsDone').addEventListener('click', () => closeSettings(true));
+  pop.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); closeSettings(false); }
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT') { e.preventDefault(); closeSettings(true); }
+  });
+  document.addEventListener('click', (e) => {
+    if (!pop.hidden && !pop.contains(e.target) && !gear.contains(e.target)) closeSettings(true);
+  });
+
+  // ---- keyboard shortcuts: Space = start/pause, R = reset ----
+  document.addEventListener('keydown', (e) => {
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey) return;
+    const t = e.target;
+    const tag = t && t.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+    if (!pop.hidden) return;
+    if (e.key === ' ' || e.code === 'Space') {
+      if (tag === 'BUTTON' || tag === 'A') return; // let Space press the focused button
+      e.preventDefault();
+      P.toggle();
+    } else if (e.key === 'r' || e.key === 'R') {
+      e.preventDefault();
+      P.reset();
+    }
+  });
+});
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {

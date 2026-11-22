@@ -69,6 +69,9 @@
   background: #ff8a8a;
   animation: topbar-miss-pulse 1.6s ease-in-out infinite;
 }
+.topbar-pill.pomo-run-focus .topbar-pill-dot { background: #FF9559; box-shadow: 0 0 6px rgba(255, 149, 89, 0.7); }
+.topbar-pill.pomo-run-short .topbar-pill-dot { background: #6ee7b7; box-shadow: 0 0 6px rgba(110, 231, 183, 0.7); }
+.topbar-pill.pomo-run-long  .topbar-pill-dot { background: #7DD3FC; box-shadow: 0 0 6px rgba(125, 211, 252, 0.7); }
 @keyframes topbar-miss-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
   50%      { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
@@ -124,6 +127,14 @@
 .topbar-water-add:active { transform: scale(0.94); }
 .topbar-water-add.flash {
   background: linear-gradient(180deg, rgba(125, 211, 252, 0.65), rgba(110, 231, 183, 0.65));
+}
+
+/* Narrow screens: keep each chip at its natural width and let the bar
+   scroll sideways, instead of squeezing labels into each other. */
+@media (max-width: 600px) {
+  .topbar { overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .topbar::-webkit-scrollbar { display: none; }
+  .topbar-pill, .topbar-water-wrap { flex: 0 0 auto; }
 }
 
 @media (max-width: 480px) {
@@ -190,6 +201,11 @@ body.topbar-modal-open {
     <span class="topbar-pill-dot"></span>
     <span class="topbar-pill-label">GOALS</span>
     <span class="topbar-pill-count" id="topbarGoalsCount">—/—</span>
+  </a>
+  <a href="index.html#focus" class="topbar-pill" id="topbarFocus" aria-label="Focus timer">
+    <span class="topbar-pill-dot"></span>
+    <span class="topbar-pill-label">FOCUS</span>
+    <span class="topbar-pill-count" id="topbarFocusCount">—/—</span>
   </a>
   <a href="health.html" class="topbar-pill" id="topbarStack">
     <span class="topbar-pill-dot"></span>
@@ -341,6 +357,31 @@ body.topbar-modal-open {
   // The top bar is on every page, so it owns syncing water (the 'water'
   // row in app_state) everywhere: pulls the latest on load, applies live
   // changes from other devices, and pushes every +1 via sync.js.
+  // -------- Focus (Pomodoro) chip --------
+  // Shows sessions done today (e.g. 2/4), or the live countdown while a
+  // session runs. pomodoro.js is loaded on every page so a phase that ends
+  // while you're on another page still chimes and notifies.
+  function renderFocusChip(snap) {
+    const el = document.getElementById('topbarFocus');
+    const countEl = document.getElementById('topbarFocusCount');
+    if (!el || !countEl || !snap) return;
+    const running = snap.status === 'running';
+    countEl.textContent = running
+      ? window.Pomodoro.format(snap.remainingMs)
+      : snap.todayCount + '/' + snap.dailyTarget;
+    el.classList.remove('pomo-run-focus', 'pomo-run-short', 'pomo-run-long', 'good', 'warn', 'miss');
+    if (running) el.classList.add('pomo-run-' + snap.phase);
+    el.setAttribute('aria-label', running
+      ? snap.phaseLabel + ' timer, ' + window.Pomodoro.format(snap.remainingMs) + ' left'
+      : 'Focus: ' + snap.todayCount + ' of ' + snap.dailyTarget + ' sessions today');
+  }
+  async function startFocusChip() {
+    try {
+      if (!window.Pomodoro) await loadScript('pomodoro.js');
+    } catch (e) { return; }
+    if (window.Pomodoro) window.Pomodoro.subscribe(renderFocusChip);
+  }
+
   function loadScript(src) {
     return new Promise((resolve, reject) => {
       const s = document.createElement('script');
@@ -437,6 +478,7 @@ body.topbar-modal-open {
     lockGestures();
     startModalLock();
     startWaterSync();
+    startFocusChip();
 
     // Re-render when localStorage changes from another tab/window OR when
     // the page becomes visible (sync may have pulled in the background).
