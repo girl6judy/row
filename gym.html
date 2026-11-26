@@ -17,7 +17,7 @@
      ============================================================= -->
 <script>
 const CONFIG = {
-  appTitle: "Progressive Overload Coach",
+  appTitle: "The X-Frame Program – 5 Day",
 
   // Weight unit shown everywhere. "kg" or "lb".
   units: "kg",
@@ -29,26 +29,30 @@ const CONFIG = {
     { id: "comm",  name: "Commercial Gym" }
   ],
 
-  // Training split. Most people use Push/Pull/Legs but you can rename
-  // these to "Upper", "Lower", "Full Body", "Day A", anything.
+  // Training split: The X-Frame Program (5-Day), Phase 1 (Weeks 1–4).
+  // Monday to Friday sessions; Sunday rest. Plus 20 min of MISS or MIIT
+  // cardio 3x a week: after Tuesday's and Thursday's sessions, and Saturday.
+  // `programVersion` triggers a one-time switch of saved data to this plan
+  // (logged sets are kept). Bump it when loading Phase 2 / Phase 3.
+  programVersion: "xframe-5day-p1",
   days: [
-    { id: "push", name: "Push" },
-    { id: "pull", name: "Pull" },
-    { id: "legs", name: "Legs" }
+    { id: "d1", name: "Hip Width & Thrust" },
+    { id: "d2", name: "Upper Body & Core" },
+    { id: "d3", name: "Legs & Glutes" },
+    { id: "d4", name: "Hip Width B" },
+    { id: "d5", name: "Full-Body Pump" },
+    { id: "d6", name: "Cardio" }
   ],
 
-  // Split rotation — the order your training days cycle through. Use day
-  // ids from `days` above, plus "rest" for off-days. The pill at the top
-  // of the app reads this + splitAnchor to compute "what day is today".
-  splitRotation: ["push", "pull", "legs", "rest"],
+  // Split rotation — the order your training days cycle through, by day
+  // id from `days` above, plus "rest" for off-days.
+  splitRotation: ["d1", "d2", "d3", "d4", "d5", "d6", "rest"],
 
-  // Anchor: pair a real calendar date with which split day fell on it.
-  // The rotation advances from this point. Set `date` to a recent day
-  // when you knew what split you were on, and `splitId` to that day.
-  // Edit this if your split drifts.
+  // Anchor: a real calendar date and which split day fell on it.
+  // 2026-11-23 was a Monday = Day 1 (Hip Width & Thrust).
   splitAnchor: {
-    date: "2026-05-12",
-    splitId: "rest"
+    date: "2026-11-23",
+    splitId: "d1"
   },
 
   // Progression rule: hit this many reps on the top set → coach tells you
@@ -66,28 +70,87 @@ const CONFIG = {
     windowDays: 30           // window to compute weight + strength change
   },
 
-  // Starter exercise list. Each one needs:
+  // Exercise list. Each one needs:
+  //   id          — stable id (logs are keyed by it)
   //   name        — what shows in the dropdown
   //   gym         — one of the gym ids above, or "both"
   //   day         — one of the day ids above
-  //   repMin      — bottom of your target rep range
+  //   repMin      — bottom of your target rep range (seconds for holds)
   //   repMax      — top of your target rep range
   //   step        — how much weight you add when progressing (kg/lb)
   //   startWeight — starting weight (ignored when bw: true)
   //   bw          — true for bodyweight movements (logs reps only)
+  //   plan        — sets · reps · tempo · rest · cue, shown under the picker
   //
-  // First-run defaults. Once a user logs anything, they edit through
-  // the in-app + / gear buttons; this block stays as the seed.
+  // From The X-Frame Program (5-Day) PDF, Phase 1. Tempo = lower · pause ·
+  // lift · squeeze, in seconds. A1/A2 = superset: do A1, go straight to A2,
+  // rest after the pair. Page numbers are from Contreras, Bodyweight
+  // Strength Training Anatomy (2nd ed.).
   defaultExercises: [
-    { name: "Bench press",     gym: "comm", day: "push", repMin: 5, repMax: 8,  step: 2.5, startWeight: 60 },
-    { name: "Overhead press",  gym: "comm", day: "push", repMin: 5, repMax: 8,  step: 2.5, startWeight: 35 },
-    { name: "Tricep pushdown", gym: "comm", day: "push", repMin: 8, repMax: 12, step: 2.5, startWeight: 25 },
-    { name: "Pull-ups",        gym: "both", day: "pull", repMin: 5, repMax: 10, step: 1,   startWeight: 0, bw: true },
-    { name: "Barbell row",     gym: "comm", day: "pull", repMin: 6, repMax: 10, step: 2.5, startWeight: 50 },
-    { name: "Bicep curl",      gym: "comm", day: "pull", repMin: 8, repMax: 12, step: 1.25,startWeight: 15 },
-    { name: "Back squat",      gym: "comm", day: "legs", repMin: 5, repMax: 8,  step: 5,   startWeight: 80 },
-    { name: "Romanian deadlift", gym: "comm", day: "legs", repMin: 6, repMax: 10, step: 5, startWeight: 60 },
-    { name: "Leg press",       gym: "comm", day: "legs", repMin: 8, repMax: 12, step: 5,   startWeight: 100 }
+    { id: "xf1_d1_a1", name: "A1 · B-stance hip thrust (per side)", gym: "both", day: "d1", repMin: 12, repMax: 15, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 12–15/side · tempo 2-0-1-2 · superset with A2 · Shoulders on the couch, working foot slightly inside hip width; kickstand heel only balances. (p. 187)" },
+    { id: "xf1_d1_a2", name: "A2 · Extra-range side-lying hip abduction (per side)", gym: "both", day: "d1", repMin: 15, repMax: 20, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 15–20/side · tempo 3-0-1-1 · rest 60–75 s after the pair · Working leg hangs off a couch edge into a stretch; top leg slightly behind you, toes angled down. (p. 197)" },
+    { id: "xf1_d1_b1", name: "B1 · Fire hydrant → extra-range in Wk 3–4 (per side)", gym: "both", day: "d1", repMin: 15, repMax: 15, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 15/side · tempo 2-0-1-1 · superset with B2 · Shift onto the planted knee first. Weeks 1–2 fire hydrant, Weeks 3–4 extra-range fire hydrant. (pp. 202–203)" },
+    { id: "xf1_d1_b2", name: "B2 · Dead bug (per side)", gym: "both", day: "d1", repMin: 10, repMax: 10, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 10/side · tempo 3-0-3-0 · rest 60–75 s after the pair · Low back pressed down. (p. 70)" },
+    { id: "xf1_d1_c1", name: "C1 · Side-lying hip raise, top leg straight (per side)", gym: "both", day: "d1", repMin: 8, repMax: 12, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 8–12/side · tempo 2-0-1-2 · superset with C2 · Straight line from shoulder to foot; drive the bottom knee down and out. (p. 199)" },
+    { id: "xf1_d1_c2", name: "C2 · Frog pump", gym: "both", day: "d1", repMin: 30, repMax: 40, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 30–40 · tempo 1-0-1-1 · rest 60–75 s after the pair · Band above the knees if you have one. (p. 185)" },
+    { id: "xf1_d2_a1", name: "A1 · Inverted row, pause at top", gym: "both", day: "d2", repMin: 10, repMax: 12, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 10–12 · tempo 3-0-1-2 · superset with A2 · Check the table can't tip; 2 s squeeze at the top. (p. 96)" },
+    { id: "xf1_d2_a2", name: "A2 · Push-up", gym: "both", day: "d2", repMin: 8, repMax: 15, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 8–15 · tempo 3-1-1-0 · rest 60–75 s after the pair · Body in one line; 1 s pause just above the floor. (p. 44)" },
+    { id: "xf1_d2_b1", name: "B1 · Sheet face pull", gym: "both", day: "d2", repMin: 12, repMax: 15, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 12–15 · tempo 2-0-1-2 · superset with B2 · Towel around a sturdy post or railing, never a door that could open. (p. 102)" },
+    { id: "xf1_d2_b2", name: "B2 · Side plank (seconds per side)", gym: "both", day: "d2", repMin: 30, repMax: 45, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 30–45 s/side hold · rest 60–75 s after the pair · Hips high and stacked. Log seconds as reps. (p. 79)" },
+    { id: "xf1_d2_c1", name: "C1 · RKC plank (seconds)", gym: "both", day: "d2", repMin: 20, repMax: 30, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 20–30 s at max tension · superset with C2 · Log seconds as reps. (p. 78)" },
+    { id: "xf1_d2_c2", name: "C2 · Ab vacuum (10-s holds)", gym: "both", day: "d2", repMin: 5, repMax: 5, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 5 holds × 10 s · rest 45 s after the pair · Trains the transversus; won't spot-reduce. Log holds as reps. (p. 90)" },
+    { id: "xf1_d2_d", name: "D · Glute finisher: side-lying clam (per side)", gym: "both", day: "d2", repMin: 20, repMax: 20, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 20/side · tempo 1-0-1-2 · rest 30 s · 5 minutes. Band above the knees if you have one. (p. 198)" },
+    { id: "xf1_d2_cardio", name: "Cardio · MISS or MIIT (minutes)", gym: "both", day: "d2", repMin: 20, repMax: 20, step: 1, startWeight: 0, bw: true,
+      plan: "After the session. 20 min · MISS: one steady pace where you can talk in short sentences (about 5–6/10 effort), e.g. incline walk, bike, stairs or a brisk outdoor walk. Or MIIT: alternate 1 min harder (about 7/10) with 1 min easy for 20 min. Moderate, not all-out, so it doesn't eat into glute recovery. Log minutes as reps." },
+    { id: "xf1_d3_a1", name: "A1 · Bulgarian split squat, glute-biased (per side)", gym: "both", day: "d3", repMin: 10, repMax: 12, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 10–12/side · tempo 3-1-1-0 · superset with A2 · Longer stride, front shin near vertical, lean forward. Weaker leg first. (p. 135)" },
+    { id: "xf1_d3_a2", name: "A2 · Hip hike (per side)", gym: "both", day: "d3", repMin: 15, repMax: 15, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 15/side · tempo 2-0-1-2 · rest 60–75 s after the pair · Side-on to a wall. Drop the free hip, hike it up using the standing hip. (p. 205)" },
+    { id: "xf1_d3_b1", name: "B1 · Hip thrust → shoulder-and-feet-elevated in Wk 3–4", gym: "both", day: "d3", repMin: 15, repMax: 20, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 15–20 · tempo 2-0-1-2 · superset with B2 · Chin tucked, ribs down, full lockout. Weeks 1–2 hip thrust, Weeks 3–4 shoulder-and-feet-elevated. (pp. 186, 188)" },
+    { id: "xf1_d3_b2", name: "B2 · Single-leg sliding leg curl (per side)", gym: "both", day: "d3", repMin: 6, repMax: 10, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 6–10/side · tempo 3-0-1-0 · rest 60–75 s after the pair · Heel on a towel on a hard floor, hips high. (p. 169)" },
+    { id: "xf1_d3_c1", name: "C1 · Reaching single-leg RDL with knee raise (per side)", gym: "both", day: "d3", repMin: 10, repMax: 10, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 10/side · tempo 3-0-1-0 · superset with C2 · Back leg in line with the torso. (p. 158)" },
+    { id: "xf1_d3_c2", name: "C2 · Hollow body hold (seconds)", gym: "both", day: "d3", repMin: 20, repMax: 30, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 20–30 s hold · rest 60–75 s after the pair · Log seconds as reps. (p. 89)" },
+    { id: "xf1_d4_a1", name: "A1 · Single-leg hip thrust (per side)", gym: "both", day: "d4", repMin: 10, repMax: 12, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 10–12/side · tempo 1-0-1-2 · superset with A2 · Full range every rep. (p. 188)" },
+    { id: "xf1_d4_a2", name: "A2 · 45° side-lying hip abduction + 10 pulses (per side)", gym: "both", day: "d4", repMin: 15, repMax: 15, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 15/side + 10 pulses · tempo 2-0-1-1 · rest 60–75 s after the pair · Up and back at 45°, then top-range pulses. (p. 197)" },
+    { id: "xf1_d4_b1", name: "B1 · Extra-range prone figure-4 glute raise (per side)", gym: "both", day: "d4", repMin: 12, repMax: 12, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 12/side · tempo 1-0-1-2 · superset with B2 · On an ottoman or bed edge. (p. 207)" },
+    { id: "xf1_d4_b2", name: "B2 · Side plank (seconds per side)", gym: "both", day: "d4", repMin: 30, repMax: 30, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 30 s/side hold · rest 60–75 s after the pair · Log seconds as reps. (p. 79)" },
+    { id: "xf1_d4_cardio", name: "Cardio · MISS or MIIT (minutes)", gym: "both", day: "d4", repMin: 20, repMax: 20, step: 1, startWeight: 0, bw: true,
+      plan: "After the session. 20 min · MISS: one steady pace where you can talk in short sentences (about 5–6/10 effort), e.g. incline walk, bike, stairs or a brisk outdoor walk. Or MIIT: alternate 1 min harder (about 7/10) with 1 min easy for 20 min. Moderate, not all-out, so it doesn't eat into glute recovery. Log minutes as reps." },
+    { id: "xf1_d5_a1", name: "A1 · Reverse lunge → deficit reverse lunge in Wk 3–4 (per side)", gym: "both", day: "d5", repMin: 10, repMax: 10, step: 1, startWeight: 0, bw: true,
+      plan: "3 sets · 10/side · tempo 2-0-1-0 · superset with A2 · Long stride, about 30° lean. Deficit version from a 6–8 in. step. (pp. 140–141)" },
+    { id: "xf1_d5_a2", name: "A2 · Inverted row", gym: "both", day: "d5", repMin: 10, repMax: 12, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 10–12 · tempo 2-0-1-1 · rest 60–75 s after the pair · The 2 sets fall on rounds 2–3. (p. 96)" },
+    { id: "xf1_d5_b1", name: "B1 · Single-leg glute bridge (per side)", gym: "both", day: "d5", repMin: 15, repMax: 15, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 15/side · tempo 1-0-1-2 · superset with B2. (p. 184)" },
+    { id: "xf1_d5_b2", name: "B2 · Push-up", gym: "both", day: "d5", repMin: 10, repMax: 15, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 10–15 · tempo 2-0-1-0 · rest 60–75 s after the pair. (p. 44)" },
+    { id: "xf1_d5_c1", name: "C1 · Sheet face pull", gym: "both", day: "d5", repMin: 15, repMax: 15, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 15 · tempo 2-0-1-2 · superset with C2. (p. 102)" },
+    { id: "xf1_d5_c2", name: "C2 · Hollow body hold (seconds)", gym: "both", day: "d5", repMin: 30, repMax: 30, step: 1, startWeight: 0, bw: true,
+      plan: "2 sets · 30 s hold · rest 60–75 s after the pair · Log seconds as reps. (p. 89)" },
+    { id: "xf1_d6_cardio", name: "Cardio · MISS or MIIT (minutes)", gym: "both", day: "d6", repMin: 20, repMax: 20, step: 1, startWeight: 0, bw: true,
+      plan: "Saturday session; a longer easy walk on top is fine. 20 min · MISS: one steady pace where you can talk in short sentences (about 5–6/10 effort), e.g. incline walk, bike, stairs or a brisk outdoor walk. Or MIIT: alternate 1 min harder (about 7/10) with 1 min easy for 20 min. Moderate, not all-out, so it doesn't eat into glute recovery. Log minutes as reps." }
   ]
 };
 </script>
@@ -313,6 +376,21 @@ img, video, canvas, svg { max-width: 100%; }
   color: var(--lt-0a0a0b);
   box-shadow: inset 0 1px 0 rgba(var(--lt-rgb-255-255-255), 0.5), 0 4px 12px rgba(0,0,0,0.35);
 }
+
+/* Exercise prescription line (sets · reps · tempo · rest · cue) */
+.po-ex-plan {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(var(--lt-rgb-255-255-255), 0.025);
+  border: 1px solid var(--border);
+  font-size: 12.5px; line-height: 1.5;
+  color: var(--text-2);
+}
+.po-ex-plan[hidden] { display: none; }
+/* Five program days: let the day buttons wrap instead of truncating */
+#daySeg { flex-wrap: wrap; }
+#daySeg .po-seg-btn { flex: 1 1 auto; white-space: nowrap; overflow: visible; }
 
 /* ----- Sub-section title ----- */
 .po-sub-section { margin-top: 22px; }
@@ -1502,6 +1580,7 @@ img, video, canvas, svg { max-width: 100%; }
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
         </button>
       </div>
+      <div class="po-ex-plan" id="exPlan" hidden></div>
       <div class="po-no-ex" id="noExMsg" style="display:none">No exercises here yet. Tap <strong>+</strong> to add one.</div>
     </div>
 
@@ -1749,6 +1828,20 @@ img, video, canvas, svg { max-width: 100%; }
   }
   function normalize(s) {
     s = s || {};
+    // One-time switch to the current program (CONFIG.programVersion).
+    // Replaces days, exercises and rotation; logged sets stay in s.logs.
+    // Exercise ids are fixed, so running it again never orphans logs.
+    if (CONFIG.programVersion && s.programVersion !== CONFIG.programVersion) {
+      s.days = CONFIG.days.slice();
+      s.exercises = buildDefaultExercises();
+      s.splitRotation = null;
+      s.splitAnchor = null;
+      s.filterDay = CONFIG.days[0].id;
+      s.currentEx = null;
+      s._userPickedDay = false;
+      s.programVersion = CONFIG.programVersion;
+      s._switchedProgram = true;
+    }
     s.units = s.units || CONFIG.units || 'kg';
     s.gyms  = (Array.isArray(s.gyms)  && s.gyms.length)  ? s.gyms  : CONFIG.gyms.slice();
     s.days  = (Array.isArray(s.days)  && s.days.length)  ? s.days  : CONFIG.days.slice();
@@ -1762,7 +1855,7 @@ img, video, canvas, svg { max-width: 100%; }
       s.splitRotation = (CONFIG.splitRotation || ['Push', 'Pull', 'Legs', 'Rest']).map(x =>
         // CONFIG used ids — map id → display name where possible
         (CONFIG.days || []).find(d => d.id === x) ? (CONFIG.days.find(d => d.id === x).name) :
-        (x === 'rest' ? 'Rest' : x.charAt(0).toUpperCase() + x.slice(1))
+        (x === 'rest' ? 'Rest' : x === 'walk' ? 'Walk' : x.charAt(0).toUpperCase() + x.slice(1))
       );
     }
     if (!s.splitAnchor || !s.splitAnchor.date || s.splitAnchor.index == null) {
@@ -1786,6 +1879,8 @@ img, video, canvas, svg { max-width: 100%; }
     try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {}
   }
   let state = loadState();
+  // Persist (and sync) a program switch right away.
+  if (state._switchedProgram) { delete state._switchedProgram; saveState(); }
   document.getElementById('appTitle').textContent = CONFIG.appTitle || 'Progressive Overload Coach';
 
   // ============================================================
@@ -1873,11 +1968,15 @@ img, video, canvas, svg { max-width: 100%; }
       sel.innerHTML = '<option>—</option>';
       sel.disabled = true; editBtn.disabled = true; logBtn.disabled = true;
       noMsg.style.display = 'block'; state.currentEx = null;
+      $('exPlan').hidden = true;
       return;
     }
     sel.disabled = false; editBtn.disabled = false; logBtn.disabled = false;
     noMsg.style.display = 'none';
     if (!f.find(e => e.id === state.currentEx)) state.currentEx = f[0].id;
+    const cur = f.find(e => e.id === state.currentEx);
+    $('exPlan').textContent = (cur && cur.plan) || '';
+    $('exPlan').hidden = !(cur && cur.plan);
     sel.innerHTML = f.map(e => {
       const wLbl = e.bw ? ' · BW' : (e.startWeight ? ' · ' + e.startWeight + unit() : '');
       const sh = e.gym === 'both' ? ' ★' : '';
@@ -2033,7 +2132,8 @@ img, video, canvas, svg { max-width: 100%; }
     try {
       const rot = state.splitRotation;
       if (!rot || !rot.length) return { name: '—', index: 0 };
-      const a = new Date(state.splitAnchor.date);
+      const ap = String(state.splitAnchor.date).split('-').map(Number);
+      const a = new Date(ap[0], ap[1] - 1, ap[2]);
       const t = new Date();
       a.setHours(0,0,0,0); t.setHours(0,0,0,0);
       const diffDays = Math.round((t - a) / 86400000);
@@ -3405,7 +3505,10 @@ img, video, canvas, svg { max-width: 100%; }
     // Reload every closure variable that mirrors a synced localStorage
     // key — otherwise renderAll/wtRender/photosRender would read stale
     // in-memory copies from before the remote pull.
-    try { state = loadState(); } catch {}
+    try {
+      state = loadState();
+      if (state._switchedProgram) { delete state._switchedProgram; saveState(); }
+    } catch {}
     try { wtEntries = wtLoad(); } catch {}
     try {
       const raw = localStorage.getItem(PHOTO_KEY);
