@@ -368,6 +368,56 @@ body::after {
   #pomoFill, .pomo-dot { transition: none; }
 }
 
+/* ===== To-do categories ===== */
+:root {
+  --cat-work: #7DD3FC;      /* blue */
+  --cat-personal: #6BE3A4;  /* green */
+  --cat-business: #F2C063;  /* amber */
+  --cat-property: #B794F4;  /* purple */
+}
+@media (prefers-color-scheme: light) {
+  :root:root { --cat-work: #0369A1; --cat-personal: #05875F; --cat-business: #A85B07; --cat-property: #7C3AED; }
+}
+.gm-cat, .gm-cat-pick {
+  appearance: none; -webkit-appearance: none;
+  font-family: inherit; cursor: pointer; outline: none;
+  color: var(--text-tertiary);
+  background: rgba(var(--lt-rgb-255-255-255), 0.04);
+  border: 1px solid rgba(var(--lt-rgb-255-255-255), 0.08);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.gm-cat {
+  flex: none; max-width: 120px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  text-overflow: ellipsis;
+}
+.gm-cat[data-cat=""] { border-style: dashed; opacity: 0.6; }
+.gm-row:hover .gm-cat[data-cat=""] { opacity: 1; }
+.gm-cat-pick {
+  flex: none;
+  padding: 11px 12px;
+  border-radius: 12px;
+  font-size: 13px; font-weight: 600;
+}
+.gm-cat:focus-visible, .gm-cat-pick:focus-visible { border-color: rgba(var(--lt-rgb-255-255-255), 0.30); }
+[data-cat="work"]     { color: var(--cat-work);     border-color: color-mix(in srgb, var(--cat-work) 40%, transparent);     background: color-mix(in srgb, var(--cat-work) 10%, transparent); }
+[data-cat="personal"] { color: var(--cat-personal); border-color: color-mix(in srgb, var(--cat-personal) 40%, transparent); background: color-mix(in srgb, var(--cat-personal) 10%, transparent); }
+[data-cat="business"] { color: var(--cat-business); border-color: color-mix(in srgb, var(--cat-business) 40%, transparent); background: color-mix(in srgb, var(--cat-business) 10%, transparent); }
+[data-cat="property"] { color: var(--cat-property); border-color: color-mix(in srgb, var(--cat-property) 40%, transparent); background: color-mix(in srgb, var(--cat-property) 10%, transparent); }
+.gm-cat option, .gm-cat-pick option { color: initial; background: initial; text-transform: none; }
+@media (max-width: 600px) {
+  /* Text box on its own line; category + buttons share the line below. */
+  .goal-input-wrap.gm-input-wrap .gm-input { flex: 1 1 100%; }
+  .gm-cat-pick { flex: 1 1 auto; min-width: 0; }
+}
+@media (max-width: 480px) {
+  .gm-cat { max-width: 84px; padding: 3px 7px; font-size: 9.5px; letter-spacing: 0.04em; }
+  .gm-cat-pick { padding: 11px 8px; font-size: 12px; }
+}
+
 /* ===== Component 4: section + To Do List ===== */
 .section { margin-top: 8px; }
 .section-title {
@@ -870,6 +920,7 @@ body::after {
       <button type="button" id="gmPushBtn" class="gm-push-btn" style="display:none;">Push remaining to tomorrow</button>
       <div class="goal-input-wrap gm-input-wrap">
         <input id="goalInput" class="gm-input" type="text" placeholder="Add a goal for today…" autocomplete="off">
+        <select id="goalCat" class="gm-cat-pick" data-cat="" aria-label="Category for the new goal"></select>
         <button type="button" id="goalAddBtn"    class="gm-add">+ Add</button>
         <button type="button" id="goalPolishBtn" class="gm-polish">✨ Polish</button>
         <div class="gm-status" id="polishStatus"></div>
@@ -889,6 +940,7 @@ body::after {
       <div id="tomorrowEmpty" class="empty-state">Nothing planned for tomorrow yet</div>
       <div class="goal-input-wrap gm-input-wrap">
         <input id="tomorrowInput" class="gm-input" type="text" placeholder="Add a goal for tomorrow…" autocomplete="off">
+        <select id="tomorrowCat" class="gm-cat-pick" data-cat="" aria-label="Category for the new goal"></select>
         <button type="button" id="tomorrowAddBtn"    class="gm-add">+ Add</button>
         <button type="button" id="tomorrowPolishBtn" class="gm-polish">✨ Polish</button>
         <div class="gm-status" id="tomorrowStatus"></div>
@@ -925,6 +977,34 @@ body::after {
       const k = localStorage.key(i);
       if (k && k.indexOf(prefix) === 0) out.push(k);
     }
+    return out;
+  }
+
+  // ---------- to-do categories ----------
+  const CATEGORIES = [
+    { id: 'work',     label: 'Work',     full: 'Work' },
+    { id: 'personal', label: 'Personal', full: 'Personal' },
+    { id: 'business', label: 'Business', full: 'Business' },
+    { id: 'property', label: 'Property', full: 'Property management' }
+  ];
+  function validCat(c) { return CATEGORIES.some(x => x.id === c) ? c : ''; }
+  function fillCatOptions(sel, current, emptyLabel) {
+    sel.innerHTML = '';
+    const none = document.createElement('option');
+    none.value = ''; none.textContent = emptyLabel;
+    sel.appendChild(none);
+    CATEGORIES.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = c.full;
+      sel.appendChild(o);
+    });
+    sel.value = validCat(current);
+    sel.dataset.cat = sel.value;
+  }
+  // Carry a goal's category along when it is copied (rollover, push to tomorrow).
+  function carryGoal(g) {
+    const out = { text: g.text, done: false };
+    if (validCat(g.cat)) out.cat = g.cat;
     return out;
   }
 
@@ -976,7 +1056,7 @@ body::after {
       const old = getGoals(k);
       old.forEach(g => {
         if (!g.done && g.text && !texts.has(g.text)) {
-          today.push({ text: g.text, done: false });
+          today.push(carryGoal(g));
           texts.add(g.text);
         }
       });
@@ -1286,6 +1366,24 @@ body::after {
     });
     li.appendChild(queueBtn);
 
+    const cat = document.createElement('select');
+    cat.className = 'gm-cat';
+    cat.setAttribute('aria-label', 'Category for "' + goal.text + '"');
+    fillCatOptions(cat, goal.cat, '+ Tag');
+    // Short labels on the chip itself; full names appear in the open menu.
+    Array.from(cat.options).forEach(o => {
+      const c = CATEGORIES.find(x => x.id === o.value);
+      if (c) o.textContent = c.label;
+    });
+    cat.addEventListener('change', () => {
+      const list = getGoals(key);
+      if (!list[idx]) return;
+      if (cat.value) list[idx].cat = cat.value; else delete list[idx].cat;
+      setGoals(key, list);
+      reload();
+    });
+    li.insertBefore(cat, queueBtn);
+
     const del = document.createElement('button');
     del.type = 'button';
     del.className = 'goal-delete';
@@ -1400,7 +1498,7 @@ body::after {
     const tomorrow = getGoals(tomorrowKey());
     const seen = new Set(tomorrow.map(g => g.text));
     remaining.forEach(g => {
-      if (!seen.has(g.text)) { tomorrow.push({ text: g.text, done: false }); seen.add(g.text); }
+      if (!seen.has(g.text)) { tomorrow.push(carryGoal(g)); seen.add(g.text); }
     });
     setGoals(tomorrowKey(), tomorrow);
     setGoals(todayKey(), today.filter(g => g.done));
@@ -1442,10 +1540,17 @@ body::after {
     return arr[0].trim();
   }
 
-  function makeAddHandlers(input, addBtn, polishBtn, key, statusEl, reload) {
+  function makeAddHandlers(input, addBtn, polishBtn, key, statusEl, reload, catSel) {
+    if (catSel) {
+      fillCatOptions(catSel, '', 'No category');
+      catSel.addEventListener('change', () => { catSel.dataset.cat = catSel.value; });
+    }
     function plainAdd(text) {
       const list = getGoals(key);
-      list.push({ text, done: false });
+      const goal = { text, done: false };
+      const c = catSel ? validCat(catSel.value) : '';
+      if (c) goal.cat = c;
+      list.push(goal);
       setGoals(key, list);
       input.value = '';
       reload();
@@ -1485,7 +1590,8 @@ body::after {
     document.getElementById('goalPolishBtn'),
     todayKey(),
     document.getElementById('polishStatus'),
-    loadToday
+    loadToday,
+    document.getElementById('goalCat')
   );
   makeAddHandlers(
     document.getElementById('tomorrowInput'),
@@ -1493,7 +1599,8 @@ body::after {
     document.getElementById('tomorrowPolishBtn'),
     tomorrowKey(),
     document.getElementById('tomorrowStatus'),
-    loadTomorrow
+    loadTomorrow,
+    document.getElementById('tomorrowCat')
   );
 
   // ---------- Bridge for the Focus card ----------
